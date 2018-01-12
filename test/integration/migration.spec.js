@@ -13,6 +13,7 @@ const deleteContentType = require('../../examples/delete-content-type');
 const fieldValidation = require('../../examples/09-validate-validations');
 const displayField = require('../../examples/07-display-field');
 const fieldMove = require('../../examples/08-move-field');
+const changeEditorInterface = require('../../examples/16-change-editor-interface');
 
 const { createMigrationParser } = require('../../built/lib/migration-parser');
 const co = Bluebird.coroutine;
@@ -24,10 +25,11 @@ describe('the migration', function () {
   let migrationParser;
   let migrator;
   let request;
+  let devSpaceId;
 
   before(co(function * () {
     this.timeout(30000);
-    const devSpaceId = yield createDevSpace(SOURCE_TEST_SPACE, 'migration test dev space');
+    devSpaceId = yield createDevSpace(SOURCE_TEST_SPACE, 'migration test dev space');
     request = makeRequest.bind(null, devSpaceId);
     const fetcher = new Fetcher(request);
     migrationParser = createMigrationParser(fetcher);
@@ -50,7 +52,6 @@ describe('the migration', function () {
       }
     });
   }));
-
 
   it('creates a content type', co(function * () {
     yield migrator(createDog);
@@ -475,5 +476,20 @@ describe('the migration', function () {
     ];
 
     expect(blogEntriesWithoutSys).to.eql(entries);
+  }));
+
+  it('changes the editor interface', co(function* () {
+    yield migrator(changeEditorInterface);
+
+    const editorInterfaces = yield request({
+      method: 'GET',
+      url: '/content_types/blogPost/editor_interface'
+    });
+    expect(editorInterfaces.controls).to.eql([
+      {
+        fieldId: 'slug',
+        widgetId: 'slugEditor'
+      }
+    ]);
   }));
 });

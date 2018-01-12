@@ -70,11 +70,25 @@ export default class Fetcher implements APIFetcher {
     }
 
     for (let id of contentTypeIds) {
-      const response = await this.makeRequest({
-        method: 'GET',
-        url: `/content_types/${id}/editor_interface`
-      })
-      editorInterfaces.set(id, response)
+      try {
+        const response = await this.makeRequest({
+          method: 'GET',
+          url: `/content_types/${id}/editor_interface`
+        })
+        editorInterfaces.set(id, response)
+      } catch (error) {
+        if (error.name === 'NotFound') {
+          // Initialize a default structure for newly created content types.
+          editorInterfaces.set(id, {
+            sys: {
+              version: 1
+            },
+            controls: []
+          })
+        } else {
+          throw error
+        }
+      }
     }
     return editorInterfaces
   }
